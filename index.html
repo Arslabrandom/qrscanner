@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR - Scanner</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'poppins', sans-serif;
+        }
+
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100dvh;
+        }
+
+        #input-stream {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: rotateX('180')
+        }
+
+        #video-container {
+            width: 300px;
+            height: 300px;
+            overflow: hidden;
+            position: relative;
+            background: #000;
+            border: 2px solid black;
+        }
+
+        #video-wrapper {
+            padding: 20px;
+            width: fit-content;
+            height: fit-content;
+            border: 2px dashed gray;
+        }
+
+        #camera-label-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        #c-label {
+            margin-right: auto;
+        }
+
+        #others-container {
+            display: flex;
+            flex-direction: row;
+            gap: 6px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .function-button {
+            font-size: .6rem;
+            padding: 2px 8px;
+            border: 2px solid black;
+            font-weight: 700;
+            border-radius: 0;
+            color: black;
+            user-select: none;
+        }
+
+        .button-d {
+            padding: 8px 14px;
+            background-color: lightgreen;
+            color: black;
+            border: 2px solid black;
+            font-weight: 600;
+        }
+
+        .decorative-underline {
+            border-bottom: 2px dashed gray;
+            width: 100%;
+            margin: 12px 0;
+        }
+
+        #result-wrapper {
+            display: none;
+            place-items: center;
+            position: absolute;
+            z-index: 12;
+            height: 100dvh;
+            width: 100%;
+            background-color: white;
+        }
+
+        #result-container {
+            position: relative;
+            border: 2px dashed grey;
+            padding: 32px;
+            width: fit-content;
+            min-height: 400px;
+            border-radius: 0 0 34px 0;
+        }
+
+        #result-heading {
+            font-size: 1.2rem;
+            font-weight: 600;
+            border-bottom: 2px dashed grey;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+        }
+
+        #next-button {
+            position: absolute;
+            height: 50px;
+            width: 50px;
+            border: 2px dashed black;
+            bottom: 12px;
+            right: 12px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: lightgreen;
+            transition: box-shadow 200ms ease;
+        }
+
+        #next-button:hover {
+            box-shadow: 0 0 12px lightgreen;
+            cursor: pointer;
+        }
+
+        #arrow-f {
+            color: black;
+            font-weight: 700;
+        }
+
+        #result-main {
+            white-space: normal;
+            word-break: break-all;
+            max-width: 600px;
+        }
+
+        #footer {
+            position: fixed;
+            bottom: 0;
+            text-align: center;
+            border-top: 2px dashed gray;
+            padding: 12px;
+            width: 100vw;
+        }
+
+        @media screen and (max-width: 767px) {
+            #result-container {
+                white-space: normal;
+                word-break: break-all;
+                max-width: 300px;
+                min-width: 260px;
+            }
+
+            #footer {
+                position: fixed;
+                bottom: 0;
+                text-align: center;
+                border-top: 2px dashed gray;
+                padding: 8px;
+                font-size: .8rem;
+                width: 100vw;
+            }
+        }
+
+        .bg-red {
+            background-color: red;
+        }
+
+        .bg-green {
+            background-color: green;
+        }
+
+        .bg-coral {
+            background-color: coral;
+        }
+
+        .bg-light-green {
+            background-color: lightgreen;
+        }
+
+        .m-l-auto {
+            margin-left: auto;
+        }
+
+        .animate-entry {
+            animation: entry 140ms linear;
+        }
+
+        .animate-exit {
+            animation: exit 200ms linear;
+        }
+
+        @keyframes entry {
+            from {
+                transform: translateY(-110%);
+            }
+
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes exit {
+            from {
+                transform: translateY(0);
+            }
+
+            to {
+                transform: translateY(-110%);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="result-wrapper">
+        <div id="result-container">
+            <div id="result-heading">SCAN RESULTS</div>
+            <p id="result-main"></p>
+            <abbr title="Scan again">
+                <div id="next-button">
+                    <svg id="arrow-f" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960"
+                        width="24px" fill="#000000">
+                        <path d="M647-440H160v-80h487L423-744l57-56 320 320-320 320-57-56 224-224Z" />
+                    </svg>
+                </div>
+            </abbr>
+        </div>
+    </div>
+    <div id="video-wrapper">
+        <div id="video-container">
+            <video id="input-stream"></video>
+        </div>
+        <span id="camera-label-container">
+            <select id="c-label" class="function-button"></select>
+            <button class="f-button bg-coral function-button" value="0">STOP</button>
+            <button class="f-button bg-light-green function-button" value="1">START</button>
+        </span>
+        <div class="decorative-underline"></div>
+        <div id="others-container">
+            <label for="flash-checkbox">Flash:</label>
+            <input id="flash-checkbox" type="checkbox">
+            <label class="m-l-auto" for="inversion-mode-selector">Inversion mode: </label>
+            <select class="function-button" id="inversion-mode-selector">
+                <option value="original">original</option>
+                <option value="invert">invert</option>
+                <option value="both">both</option>
+            </select>
+        </div>
+    </div>
+    <footer id="footer">
+        <span>Made by: <a href="https://instagram.com/pixelsmith.rz">Pixelsmith</a> with <a
+                href="https://github.com/nimiq/qr-scanner?tab=readme-ov-file"> Nimiq/qr-scanner</a></span>
+    </footer>
+    <script type="module">
+        import QrScanner from '/nimiq/qr-scanner.min.js';
+
+        const inputStream = document.querySelector('#input-stream');
+        const functionBtns = document.querySelectorAll('.f-button');
+        const camSelector = document.querySelector('#c-label');
+        const inversionModeSelector = document.querySelector('#inversion-mode-selector');
+        const flashButton = document.querySelector('#flash-checkbox');
+        const resultScreen = document.querySelector('#result-wrapper');
+        const resultMain = document.querySelector('#result-main');
+        const nextButton = document.querySelector('#next-button');
+
+        let isFlashOn = false;
+
+        const qrScanner = new QrScanner(
+            inputStream,
+            result => processResults(result),
+            {
+                returnDetailedScanResult: true,
+                maxScansPerSecond: 10,
+                highlightScanRegion: true,
+                highlightCodeOutline: true
+            },
+        );
+
+        const formatLabel = text => {
+            const cleaned = text.replace(/\s+/g, '').toLowerCase();
+            return cleaned.substring(0, 20);
+        };
+
+        const processResults = result => {
+            playBeep();
+            qrScanner.stop();
+            resultScreen.style.display = "grid";
+            resultScreen.classList.add('animate-entry');
+            let scannedData = result.data;
+            resultMain.textContent = scannedData;
+        };
+
+        nextButton.addEventListener('click', () => {
+            resultScreen.classList.remove("animate-entry");
+            resultScreen.classList.add("animate-exit");
+            qrScanner.start();
+        });
+
+        resultScreen.addEventListener('animationend', (event) => {
+            if (event.animationName === "entry") {
+                console.log("Results shown");
+            } else if (event.animationName === 'exit') {
+                resultScreen.style.display = 'none';
+                resultMain.innerHTML = "";
+                resultScreen.classList.remove('animate-exit');
+            }
+        });
+
+        const loadCameraFunctions = async () => {
+            let cFunctions = {
+                camera: await QrScanner.hasCamera(),
+                camera_list: await QrScanner.listCameras(true)
+            }
+            return cFunctions;
+        };
+
+        loadCameraFunctions().then(f => {
+            if (!f.camera || f.camera <= 0) {
+                return document.querySelector('#cam-count').textContent = "Camera not available or Permission denied."
+            }
+            f.camera_list.forEach(cam => {
+                let optionLabel = formatLabel(cam.label);
+                const newOption = document.createElement('option');
+                newOption.value = cam.id;
+                newOption.textContent = optionLabel;
+                camSelector.appendChild(newOption);
+            });
+            camSelector.addEventListener('input', () => {
+                qrScanner.setCamera(camSelector.value);
+            })
+            functionBtns.forEach(button => {
+                button.addEventListener('click', () => {
+                    let command = button.value;
+                    if (Number(command)) {
+                        qrScanner.start();
+                    } else {
+                        qrScanner.stop();
+                    }
+                })
+            })
+            inversionModeSelector.addEventListener('input', () => {
+                qrScanner.setInversionMode(inversionModeSelector.value);
+            })
+            flashButton.addEventListener('input', () => {
+                qrScanner.toggleFlash();
+            })
+        });
+
+        // Below logic is written by Chatgpt
+
+        const playBeep = () => {
+            // Create audio context
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+            // Create oscillator and gain (volume) nodes
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            // Set beep properties
+            oscillator.type = 'square'; // Options: 'sine', 'square', 'sawtooth', 'triangle'
+            oscillator.frequency.setValueAtTime(800, audioCtx.currentTime); // Value in hertz (A4)
+            gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime); // Reduce volume
+
+            // Start and stop the beep
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.1); // Duration: 0.1 seconds
+        };
+    </script>
+</body>
+
+</html>
